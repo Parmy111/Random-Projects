@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text-to-Speech with Image</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    #inputText{
+        margin: 5px auto;
+        padding: 2.5px;
+        width: 50%;
+        max-width: 120px;
+        font-size: 16px;
+    }
+    #inputText {
+        margin: 20px auto;
+        padding: 10px;
+        width: 80%;
+        max-width: 400px;
+        font-size: 16px;
+    }
+    #speakButton {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    #paceSlider {
+        margin-top: 20px;
+        width: 80%;
+        max-width: 400px;
+    }
+    #imageContainer {
+        margin-top: 20px;
+    }
+    #imageContainer img {
+        max-width: 100%;
+        height: auto;
+        display: none; /* Hide image by default */
+    }
+</style>
+</head>
+<body>
+<h1>Text-to-Speech with Image</h1>
+<sub>Add The Important Words Here</sub>
+<textarea id="inputText" rows="4" cols="50"></textarea><br>
+<textarea id="iws" rows="2" cols="25"></textarea><br>
+<button id="speakButton">Speak</button><br>
+<input type="range" min="0.5" max="2" value="1" step="0.1" id="paceSlider">
+<span id="paceValue">1.0x</span>
+<div id="imageContainer"></div>
+<script>
+    const speakButton = document.getElementById('speakButton');
+    const inputText = document.getElementById('inputText');
+    const iws = document.getElementById('iws')
+    const paceSlider = document.getElementById('paceSlider');
+    const paceValue = document.getElementById('paceValue');
+    const imageContainer = document.getElementById('imageContainer');
+
+    speakButton.addEventListener('click', () => {
+        const text = inputText.value.trim();
+        if (text !== '') {
+            speak(text);
+        } else {
+            alert('Please enter some text.');
+        }
+    });
+
+    paceSlider.addEventListener('input', () => {
+        paceValue.textContent = paceSlider.value + 'x';
+    });
+
+    function speak(text) {
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = text;
+        speech.rate = parseFloat(paceSlider.value);
+
+        // Remove the previous image, if any
+        removeImage();
+
+        // Start speaking
+        window.speechSynthesis.speak(speech);
+
+        // Split the text into words
+        const words = text.split(' ');
+
+        // Check each word for specific keywords and display related images
+        words.forEach((word, index) => {
+            // List of important words and their corresponding image search query
+            const importantWords = {
+                'corn': 'corn field', 'american': 'burger'
+                // Add more words and their corresponding queries here
+            };
+
+            // Check if the word is in the list of important words
+            if (importantWords.hasOwnProperty(word.toLowerCase())) {
+                const query = importantWords[word.toLowerCase()];
+                searchImage(query);
+            }
+        });
+    }
+
+    function searchImage(query) {
+        // Use Unsplash API to search for images
+        const clientId = 'toBRpPybzAsfypt1qw5Poz90cGWJl3zs0FW_oGeVfSM';
+        const apiUrl = `https://api.unsplash.com/photos/random?query=${query}&client_id=${clientId}`;
+        
+        // Fetch image data from Unsplash API
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                // Extract image URL from response
+                const imageUrl = data.urls.regular;
+                
+                // Create and display image element
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = query; // Use the query as alt text
+                imageContainer.innerHTML = ''; // Clear previous image
+                imageContainer.appendChild(img);
+                img.style.display = 'block'; // Display the image
+            })
+            .catch(error => {
+                console.error('Error fetching image:', error);
+            });
+    }
+
+    function removeImage() {
+        const img = imageContainer.querySelector('img');
+        if (img) {
+            img.parentNode.removeChild(img);
+        }
+    }
+</script>
+</body>
+</html>
